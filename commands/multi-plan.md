@@ -1,7 +1,3 @@
----
-description: Create a multi-model implementation plan without modifying production code.
----
-
 # Plan - Multi-Model Collaborative Planning
 
 Multi-model collaborative planning - Context retrieval + Dual-model analysis → Generate step-by-step implementation plan.

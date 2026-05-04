@@ -9,9 +9,7 @@ pub struct ToolCallEvent {
     pub session_id: String,
     pub tool_name: String,
     pub input_summary: String,
-    pub input_params_json: String,
     pub output_summary: String,
-    pub trigger_summary: String,
     pub duration_ms: u64,
     pub risk_score: f64,
 }
@@ -49,9 +47,7 @@ impl ToolCallEvent {
                 .score,
             tool_name,
             input_summary,
-            input_params_json: "{}".to_string(),
             output_summary: output_summary.into(),
-            trigger_summary: String::new(),
             duration_ms,
         }
     }
@@ -242,9 +238,7 @@ pub struct ToolLogEntry {
     pub session_id: String,
     pub tool_name: String,
     pub input_summary: String,
-    pub input_params_json: String,
     pub output_summary: String,
-    pub trigger_summary: String,
     pub duration_ms: u64,
     pub risk_score: f64,
     pub timestamp: String,
@@ -274,9 +268,7 @@ impl<'a> ToolLogger<'a> {
             &event.session_id,
             &event.tool_name,
             &event.input_summary,
-            &event.input_params_json,
             &event.output_summary,
-            &event.trigger_summary,
             event.duration_ms,
             event.risk_score,
             &timestamp,
@@ -314,16 +306,12 @@ mod tests {
         Session {
             id: id.to_string(),
             task: "test task".to_string(),
-            project: "workspace".to_string(),
-            task_group: "general".to_string(),
             agent_type: "claude".to_string(),
-            working_dir: PathBuf::from("/tmp"),
             state: SessionState::Pending,
             pid: None,
             worktree: None,
             created_at: now,
             updated_at: now,
-            last_heartbeat_at: now,
             metrics: SessionMetrics::default(),
         }
     }
@@ -408,8 +396,6 @@ mod tests {
         assert_eq!(first_page.entries.len(), 2);
         assert_eq!(first_page.entries[0].tool_name, "Bash");
         assert_eq!(first_page.entries[1].tool_name, "Write");
-        assert_eq!(first_page.entries[0].input_params_json, "{}");
-        assert_eq!(first_page.entries[0].trigger_summary, "");
 
         let second_page = logger.query("sess-1", 2, 2)?;
         assert_eq!(second_page.total, 3);

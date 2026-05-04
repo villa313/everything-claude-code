@@ -1,7 +1,3 @@
----
-description: Sync documentation from source-of-truth files such as scripts, schemas, routes, and exports.
----
-
 # Update Documentation
 
 Sync documentation with the codebase, generating from source-of-truth files.

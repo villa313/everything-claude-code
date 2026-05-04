@@ -16,7 +16,6 @@ const {
   getDateString,
   getTimeString,
   getSessionIdShort,
-  sanitizeSessionId,
   getProjectName,
   ensureDir,
   readFile,
@@ -179,45 +178,19 @@ function mergeSessionHeader(content, today, currentTime, metadata) {
 }
 
 async function main() {
-  // Parse stdin JSON to get transcript_path; fall back to env var on missing,
-  // empty, or non-string values as well as on malformed JSON.
+  // Parse stdin JSON to get transcript_path
   let transcriptPath = null;
   try {
     const input = JSON.parse(stdinData);
-    if (input && typeof input.transcript_path === 'string' && input.transcript_path.length > 0) {
-      transcriptPath = input.transcript_path;
-    }
+    transcriptPath = input.transcript_path;
   } catch {
-    // Malformed stdin: fall through to the env-var fallback below.
-  }
-  if (!transcriptPath) {
-    const envTranscriptPath = process.env.CLAUDE_TRANSCRIPT_PATH;
-    if (typeof envTranscriptPath === 'string' && envTranscriptPath.length > 0) {
-      transcriptPath = envTranscriptPath;
-    }
+    // Fallback: try env var for backwards compatibility
+    transcriptPath = process.env.CLAUDE_TRANSCRIPT_PATH;
   }
 
   const sessionsDir = getSessionsDir();
   const today = getDateString();
-  // Derive shortId from transcript_path UUID when available, using the SAME
-  // last-8-chars convention as getSessionIdShort(sessionId.slice(-8)). This keeps
-  // backward compatibility for normal sessions (the derived shortId matches what
-  // getSessionIdShort() would have produced from the same UUID), while making
-  // every session map to a unique filename based on its own transcript UUID.
-  //
-  // Without this, a parent session and any `claude -p ...` subprocess spawned by
-  // another Stop hook share the project-name fallback filename, and the subprocess
-  // overwrites the parent's summary. See issue #1494 for full repro details.
-  let shortId = null;
-  if (transcriptPath) {
-    const m = path.basename(transcriptPath).match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.jsonl$/i);
-    if (m) {
-      // Run through sanitizeSessionId() for byte-for-byte parity with
-      // getSessionIdShort(sessionId.slice(-8)).
-      shortId = sanitizeSessionId(m[1].slice(-8).toLowerCase());
-    }
-  }
-  if (!shortId) { shortId = getSessionIdShort(); }
+  const shortId = getSessionIdShort();
   const sessionFile = path.join(sessionsDir, `${today}-${shortId}-session.tmp`);
   const sessionMetadata = getSessionMetadata();
 

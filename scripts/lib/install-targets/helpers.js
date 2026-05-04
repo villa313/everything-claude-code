@@ -2,32 +2,11 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const PLATFORM_SOURCE_PATH_OWNERS = Object.freeze({
-  '.claude-plugin': 'claude',
-  '.codex': 'codex',
-  '.cursor': 'cursor',
-  '.gemini': 'gemini',
-  '.opencode': 'opencode',
-  '.codebuddy': 'codebuddy',
-});
-
 function normalizeRelativePath(relativePath) {
   return String(relativePath || '')
     .replace(/\\/g, '/')
     .replace(/^\.\/+/, '')
     .replace(/\/+$/, '');
-}
-
-function isForeignPlatformPath(sourceRelativePath, adapterTarget) {
-  const normalizedPath = normalizeRelativePath(sourceRelativePath);
-
-  for (const [prefix, ownerTarget] of Object.entries(PLATFORM_SOURCE_PATH_OWNERS)) {
-    if (normalizedPath === prefix || normalizedPath.startsWith(`${prefix}/`)) {
-      return ownerTarget !== adapterTarget;
-    }
-  }
-
-  return false;
 }
 
 function resolveBaseRoot(scope, input = {}) {
@@ -181,13 +160,7 @@ function createNamespacedFlatRuleOperations(adapter, moduleId, sourceRelativePat
   return operations;
 }
 
-function createFlatFileOperations({
-  moduleId,
-  repoRoot,
-  sourceRelativePath,
-  destinationDir,
-  destinationNameTransform,
-}) {
+function createFlatRuleOperations({ moduleId, repoRoot, sourceRelativePath, destinationDir }) {
   const normalizedSourcePath = normalizeRelativePath(sourceRelativePath);
   const sourceRoot = path.join(repoRoot || '', normalizedSourcePath);
 
@@ -207,43 +180,25 @@ function createFlatFileOperations({
     if (entry.isDirectory()) {
       const relativeFiles = listRelativeFiles(entryPath);
       for (const relativeFile of relativeFiles) {
-        const defaultFileName = `${namespace}-${normalizeRelativePath(relativeFile).replace(/\//g, '-')}`;
-        const sourceRelativeFile = path.join(normalizedSourcePath, namespace, relativeFile);
-        const flattenedFileName = typeof destinationNameTransform === 'function'
-          ? destinationNameTransform(defaultFileName, sourceRelativeFile)
-          : defaultFileName;
-        if (!flattenedFileName) {
-          continue;
-        }
+        const flattenedFileName = `${namespace}-${normalizeRelativePath(relativeFile).replace(/\//g, '-')}`;
         operations.push(createManagedOperation({
           moduleId,
-          sourceRelativePath: sourceRelativeFile,
+          sourceRelativePath: path.join(normalizedSourcePath, namespace, relativeFile),
           destinationPath: path.join(destinationDir, flattenedFileName),
           strategy: 'flatten-copy',
         }));
       }
     } else if (entry.isFile()) {
-      const sourceRelativeFile = path.join(normalizedSourcePath, entry.name);
-      const destinationFileName = typeof destinationNameTransform === 'function'
-        ? destinationNameTransform(entry.name, sourceRelativeFile)
-        : entry.name;
-      if (!destinationFileName) {
-        continue;
-      }
       operations.push(createManagedOperation({
         moduleId,
-        sourceRelativePath: sourceRelativeFile,
-        destinationPath: path.join(destinationDir, destinationFileName),
+        sourceRelativePath: path.join(normalizedSourcePath, entry.name),
+        destinationPath: path.join(destinationDir, entry.name),
         strategy: 'flatten-copy',
       }));
     }
   }
 
   return operations;
-}
-
-function createFlatRuleOperations(options) {
-  return createFlatFileOperations(options);
 }
 
 function createInstallTargetAdapter(config) {
@@ -305,32 +260,21 @@ function createInstallTargetAdapter(config) {
       if (Array.isArray(input.modules)) {
         return input.modules.flatMap(module => {
           const paths = Array.isArray(module.paths) ? module.paths : [];
-          return paths
-            .filter(p => !isForeignPlatformPath(p, config.target))
-            .map(sourceRelativePath => adapter.createScaffoldOperation(
-              module.id,
-              sourceRelativePath,
-              input
-            ));
+          return paths.map(sourceRelativePath => adapter.createScaffoldOperation(
+            module.id,
+            sourceRelativePath,
+            input
+          ));
         });
       }
 
       const module = input.module || {};
       const paths = Array.isArray(module.paths) ? module.paths : [];
-      return paths
-        .filter(p => !isForeignPlatformPath(p, config.target))
-        .map(sourceRelativePath => adapter.createScaffoldOperation(
-          module.id,
-          sourceRelativePath,
-          input
-        ));
-    },
-    supportsModule(module, input = {}) {
-      if (typeof config.supportsModule === 'function') {
-        return config.supportsModule(module, input, adapter);
-      }
-
-      return true;
+      return paths.map(sourceRelativePath => adapter.createScaffoldOperation(
+        module.id,
+        sourceRelativePath,
+        input
+      ));
     },
     validate(input = {}) {
       if (typeof config.validate === 'function') {
@@ -346,7 +290,6 @@ function createInstallTargetAdapter(config) {
 
 module.exports = {
   buildValidationIssue,
-  createFlatFileOperations,
   createFlatRuleOperations,
   createInstallTargetAdapter,
   createManagedOperation,
@@ -360,6 +303,5 @@ module.exports = {
   ),
   createNamespacedFlatRuleOperations,
   createRemappedOperation,
-  isForeignPlatformPath,
   normalizeRelativePath,
 };

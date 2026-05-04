@@ -243,7 +243,7 @@ genhtml coverage.info --output-directory coverage_html
 
 - `/cpp-build` - Fix build errors
 - `/cpp-review` - Review code after implementation
-- `verification-loop` skill - Run full verification loop
+- `/verify` - Run full verification loop
 
 ## Related
 

@@ -1,5 +1,5 @@
 ---
-description: 将当前会话状态保存到 ~/.claude/session-data/ 目录下带日期的文件中，以便在未来的会话中恢复完整上下文并继续工作。
+description: 将当前会话状态保存到 ~/.claude/sessions/ 目录下带日期的文件中，以便在未来的会话中恢复完整上下文并继续工作。
 ---
 
 # 保存会话命令
@@ -29,12 +29,12 @@ description: 将当前会话状态保存到 ~/.claude/session-data/ 目录下带
 在用户的 Claude 主目录中创建规范的会话文件夹：
 
 ```bash
-mkdir -p ~/.claude/session-data
+mkdir -p ~/.claude/sessions
 ```
 
 ### 步骤 3：写入会话文件
 
-创建 `~/.claude/session-data/YYYY-MM-DD-<short-id>-session.tmp`，使用今天的实际日期和一个满足 `session-manager.js` 中 `SESSION_FILENAME_REGEX` 强制规则的短 ID：
+创建 `~/.claude/sessions/YYYY-MM-DD-<short-id>-session.tmp`，使用今天的实际日期和一个满足 `session-manager.js` 中 `SESSION_FILENAME_REGEX` 强制规则的短 ID：
 
 * 允许的字符：小写 `a-z`，数字 `0-9`，连字符 `-`
 * 最小长度：8 个字符
@@ -248,5 +248,5 @@ mkdir -p ~/.claude/session-data
 * “什么没有成功”部分是最关键的——没有它，未来的会话将盲目地重试失败的方法
 * 如果用户要求中途保存会话（而不仅仅是在结束时），则保存目前已知的内容，并清楚地标记进行中的项目
 * 该文件旨在通过 `/resume-session` 在下次会话开始时由 Claude 读取
-* 使用规范的全局会话存储：`~/.claude/session-data/`
+* 使用规范的全局会话存储：`~/.claude/sessions/`
 * 对于任何新的会话文件，首选短 ID 文件名形式（`YYYY-MM-DD-<short-id>-session.tmp`）

@@ -29,8 +29,4 @@ if [[ ! -f "$SCRIPT_PATH" ]]; then
   exit 0
 fi
 
-# Extract phase prefix from hook ID (e.g., "pre:observe" -> "pre", "post:observe" -> "post")
-# This is needed by scripts like observe.sh that behave differently for PreToolUse vs PostToolUse
-HOOK_PHASE="${HOOK_ID%%:*}"
-
-printf '%s' "$INPUT" | "$SCRIPT_PATH" "$HOOK_PHASE"
+printf '%s' "$INPUT" | "$SCRIPT_PATH"
