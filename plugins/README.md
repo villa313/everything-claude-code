@@ -57,7 +57,7 @@ claude plugin install typescript-lsp@claude-plugins-official
 
 **Workflow:**
 - `commit-commands` - Git workflow
-- `frontend-patterns` - UI patterns
+- `frontend-design` - UI patterns
 - `feature-dev` - Feature development
 
 ---

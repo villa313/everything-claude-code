@@ -38,11 +38,9 @@ function writeState(filePath, options) {
 }
 
 function runNode(scriptPath, args = [], options = {}) {
-  const homeDir = options.homeDir || process.env.HOME;
   const env = {
     ...process.env,
-    HOME: homeDir,
-    USERPROFILE: homeDir,
+    HOME: options.homeDir || process.env.HOME,
   };
 
   try {

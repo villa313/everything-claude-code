@@ -1,7 +1,3 @@
----
-description: Analyze coverage, identify gaps, and generate missing tests toward the target threshold.
----
-
 # Test Coverage
 
 Analyze test coverage, identify gaps, and generate missing tests to reach 80%+ coverage.

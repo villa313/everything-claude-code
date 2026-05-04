@@ -1,5 +1,5 @@
 ---
-description: 从 ~/.claude/session-data/ 加载最新的会话文件，并从上次会话结束的地方恢复工作，保留完整上下文。
+description: 从 ~/.claude/sessions/ 加载最新的会话文件，并从上次会话结束的地方恢复工作，保留完整上下文。
 ---
 
 # 恢复会话命令
@@ -17,10 +17,10 @@ description: 从 ~/.claude/session-data/ 加载最新的会话文件，并从上
 ## 用法
 
 ```
-/resume-session                                                      # 加载 ~/.claude/session-data/ 目录下最新的文件
+/resume-session                                                      # 加载 ~/.claude/sessions/ 目录下最新的文件
 /resume-session 2024-01-15                                           # 加载该日期最新的会话
 /resume-session ~/.claude/sessions/2024-01-15-session.tmp           # 加载特定的旧格式文件
-/resume-session ~/.claude/session-data/2024-01-15-abc123de-session.tmp  # 加载当前短ID格式的会话文件
+/resume-session ~/.claude/sessions/2024-01-15-abc123de-session.tmp  # 加载当前短ID格式的会话文件
 ```
 
 ## 流程
@@ -29,18 +29,18 @@ description: 从 ~/.claude/session-data/ 加载最新的会话文件，并从上
 
 如果未提供参数：
 
-1. 检查 `~/.claude/session-data/`
+1. 检查 `~/.claude/sessions/`
 2. 选择最近修改的 `*-session.tmp` 文件
 3. 如果文件夹不存在或没有匹配的文件，告知用户：
    ```
-   在 ~/.claude/session-data/ 中未找到会话文件。
+   在 ~/.claude/sessions/ 中未找到会话文件。
    请在会话结束时运行 /save-session 来创建一个。
    ```
    然后停止。
 
 如果提供了参数：
 
-* 如果看起来像日期 (`YYYY-MM-DD`)，则先在 `~/.claude/session-data/` 中搜索，再回退到旧的 `~/.claude/sessions/`，匹配
+* 如果看起来像日期 (`YYYY-MM-DD`)，则在 `~/.claude/sessions/` 中搜索匹配
   `YYYY-MM-DD-session.tmp`（旧格式）或 `YYYY-MM-DD-<shortid>-session.tmp`（当前格式）的文件，
   并加载该日期最近修改的版本
 * 如果看起来像文件路径，则直接读取该文件
@@ -114,7 +114,7 @@ PASS: 已完成：[数量] 项已确认
 ## 示例输出
 
 ```
-SESSION LOADED: /Users/you/.claude/session-data/2024-01-15-abc123de-session.tmp
+SESSION LOADED: /Users/you/.claude/sessions/2024-01-15-abc123de-session.tmp
 ════════════════════════════════════════════════
 
 项目：my-app — JWT 认证

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 
 const CATEGORIES = [
@@ -188,25 +187,13 @@ function detectTargetMode(rootDir) {
 }
 
 function findPluginInstall(rootDir) {
-  const homeDir = process.env.HOME || process.env.USERPROFILE || os.homedir() || '';
-  const pluginDirs = [
-    'ecc',
-    'ecc@ecc',
-    'everything-claude-code',
-    'everything-claude-code@everything-claude-code',
-  ];
-  const candidateRoots = [
-    path.join(rootDir, '.claude', 'plugins'),
-    path.join(rootDir, '.claude', 'plugins', 'marketplaces'),
-    homeDir && path.join(homeDir, '.claude', 'plugins'),
-    homeDir && path.join(homeDir, '.claude', 'plugins', 'marketplaces'),
+  const homeDir = process.env.HOME || '';
+  const candidates = [
+    path.join(rootDir, '.claude', 'plugins', 'everything-claude-code', '.claude-plugin', 'plugin.json'),
+    path.join(rootDir, '.claude', 'plugins', 'everything-claude-code', 'plugin.json'),
+    homeDir && path.join(homeDir, '.claude', 'plugins', 'everything-claude-code', '.claude-plugin', 'plugin.json'),
+    homeDir && path.join(homeDir, '.claude', 'plugins', 'everything-claude-code', 'plugin.json'),
   ].filter(Boolean);
-  const candidates = candidateRoots.flatMap((pluginsDir) =>
-    pluginDirs.flatMap((pluginDir) => [
-      path.join(pluginsDir, pluginDir, '.claude-plugin', 'plugin.json'),
-      path.join(pluginsDir, pluginDir, 'plugin.json'),
-    ])
-  );
 
   return candidates.find(candidate => fs.existsSync(candidate)) || null;
 }
@@ -392,11 +379,11 @@ function getRepoChecks(rootDir) {
       id: 'eval-commands',
       category: 'Eval Coverage',
       points: 4,
-      scopes: ['repo', 'commands', 'skills'],
-      path: 'commands/checkpoint.md',
-      description: 'Checkpoint command and eval/verification skills exist',
-      pass: fileExists(rootDir, 'commands/checkpoint.md') && fileExists(rootDir, 'skills/eval-harness/SKILL.md') && fileExists(rootDir, 'skills/verification-loop/SKILL.md'),
-      fix: 'Add checkpoint command plus eval-harness and verification-loop skills to standardize verification loops.',
+      scopes: ['repo', 'commands'],
+      path: 'commands/eval.md',
+      description: 'Eval and verification commands exist',
+      pass: fileExists(rootDir, 'commands/eval.md') && fileExists(rootDir, 'commands/verify.md') && fileExists(rootDir, 'commands/checkpoint.md'),
+      fix: 'Add eval/checkpoint/verify commands to standardize verification loops.',
     },
     {
       id: 'eval-tests-presence',
@@ -493,7 +480,7 @@ function getConsumerChecks(rootDir) {
       category: 'Tool Coverage',
       points: 4,
       scopes: ['repo'],
-      path: '~/.claude/plugins/ecc/ (legacy everything-claude-code paths also supported)',
+      path: '~/.claude/plugins/everything-claude-code/',
       description: 'Everything Claude Code is installed for the active user or project',
       pass: Boolean(pluginInstall),
       fix: 'Install the ECC plugin for this user or project before auditing project-specific harness quality.',

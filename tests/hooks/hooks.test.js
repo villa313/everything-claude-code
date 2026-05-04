@@ -422,108 +422,8 @@ async function runTests() {
         });
         assert.strictEqual(result.code, 0);
         const additionalContext = getSessionStartAdditionalContext(result.stdout);
-        assert.ok(
-          additionalContext.includes('HISTORICAL REFERENCE ONLY'),
-          'Should wrap injected session with the stale-replay guard preamble'
-        );
-        assert.ok(
-          additionalContext.includes('STALE-BY-DEFAULT'),
-          'Should spell out the stale-by-default contract so the model does not re-execute prior ARGUMENTS'
-        );
-        assert.ok(
-          additionalContext.includes('--- BEGIN PRIOR-SESSION SUMMARY ---'),
-          'Should delimit the prior-session summary with an explicit begin marker'
-        );
-        assert.ok(
-          additionalContext.includes('--- END PRIOR-SESSION SUMMARY ---'),
-          'Should delimit the prior-session summary with an explicit end marker'
-        );
+        assert.ok(additionalContext.includes('Previous session summary'), 'Should inject real session content');
         assert.ok(additionalContext.includes('authentication refactor'), 'Should include session content text');
-      } finally {
-        fs.rmSync(isoHome, { recursive: true, force: true });
-      }
-    })
-  )
-    passed++;
-  else failed++;
-
-  if (
-    await asyncTest('caps very large session-start context by default', async () => {
-      const isoHome = path.join(os.tmpdir(), `ecc-large-start-${Date.now()}`);
-      const sessionsDir = getLegacySessionsDir(isoHome);
-      fs.mkdirSync(sessionsDir, { recursive: true });
-      fs.mkdirSync(path.join(isoHome, '.claude', 'skills', 'learned'), { recursive: true });
-
-      const sessionFile = path.join(sessionsDir, '2026-02-11-large000-session.tmp');
-      fs.writeFileSync(sessionFile, `# Large Session\n\nSTART_MARKER\n${'A'.repeat(20000)}\nEND_MARKER\n`);
-
-      try {
-        const result = await runScript(path.join(scriptsDir, 'session-start.js'), '', {
-          HOME: isoHome,
-          USERPROFILE: isoHome
-        });
-        assert.strictEqual(result.code, 0);
-        const additionalContext = getSessionStartAdditionalContext(result.stdout);
-        assert.ok(additionalContext.length <= 8200, `context should stay near the 8000-char default cap, got ${additionalContext.length}`);
-        assert.ok(additionalContext.includes('START_MARKER'), 'Should keep the start of the selected session summary');
-        assert.ok(additionalContext.includes('[SessionStart truncated'), 'Should explain that context was truncated');
-        assert.ok(!additionalContext.includes('END_MARKER'), 'Should not inject the full oversized session summary');
-      } finally {
-        fs.rmSync(isoHome, { recursive: true, force: true });
-      }
-    })
-  )
-    passed++;
-  else failed++;
-
-  if (
-    await asyncTest('honors ECC_SESSION_START_MAX_CHARS for injected context', async () => {
-      const isoHome = path.join(os.tmpdir(), `ecc-max-start-${Date.now()}`);
-      const sessionsDir = getLegacySessionsDir(isoHome);
-      fs.mkdirSync(sessionsDir, { recursive: true });
-      fs.mkdirSync(path.join(isoHome, '.claude', 'skills', 'learned'), { recursive: true });
-
-      const sessionFile = path.join(sessionsDir, '2026-02-11-max0000-session.tmp');
-      fs.writeFileSync(sessionFile, `# Sized Session\n\n${'B'.repeat(1200)}\n`);
-
-      try {
-        const result = await runScript(path.join(scriptsDir, 'session-start.js'), '', {
-          HOME: isoHome,
-          USERPROFILE: isoHome,
-          ECC_SESSION_START_MAX_CHARS: '700'
-        });
-        assert.strictEqual(result.code, 0);
-        const additionalContext = getSessionStartAdditionalContext(result.stdout);
-        assert.ok(additionalContext.length <= 700, `context should respect configured cap, got ${additionalContext.length}`);
-        assert.ok(additionalContext.includes('[SessionStart truncated'), 'Should include a truncation marker');
-      } finally {
-        fs.rmSync(isoHome, { recursive: true, force: true });
-      }
-    })
-  )
-    passed++;
-  else failed++;
-
-  if (
-    await asyncTest('disables session-start additional context when requested', async () => {
-      const isoHome = path.join(os.tmpdir(), `ecc-disabled-start-${Date.now()}`);
-      const sessionsDir = getLegacySessionsDir(isoHome);
-      fs.mkdirSync(sessionsDir, { recursive: true });
-      fs.mkdirSync(path.join(isoHome, '.claude', 'skills', 'learned'), { recursive: true });
-
-      const sessionFile = path.join(sessionsDir, '2026-02-11-disabled-session.tmp');
-      fs.writeFileSync(sessionFile, '# Disabled Session\n\nDO_NOT_INJECT_THIS\n');
-
-      try {
-        const result = await runScript(path.join(scriptsDir, 'session-start.js'), '', {
-          HOME: isoHome,
-          USERPROFILE: isoHome,
-          ECC_SESSION_START_CONTEXT: 'off'
-        });
-        assert.strictEqual(result.code, 0);
-        const additionalContext = getSessionStartAdditionalContext(result.stdout);
-        assert.strictEqual(additionalContext, '', 'Should emit no additional context when disabled');
-        assert.ok(result.stderr.includes('Additional context injection disabled'), `Should log disabled mode, stderr: ${result.stderr}`);
       } finally {
         fs.rmSync(isoHome, { recursive: true, force: true });
       }
@@ -590,10 +490,7 @@ async function runTests() {
         });
         assert.strictEqual(result.code, 0);
         const additionalContext = getSessionStartAdditionalContext(result.stdout);
-        assert.ok(
-          additionalContext.includes('HISTORICAL REFERENCE ONLY'),
-          'Should wrap injected session with the stale-replay guard preamble'
-        );
+        assert.ok(additionalContext.includes('Previous session summary'), 'Should inject real session content');
         assert.ok(additionalContext.includes('Windows terminal handling'), 'Should preserve sanitized session text');
         assert.ok(!additionalContext.includes('\x1b['), 'Should not emit ANSI escape codes');
       } finally {
@@ -630,60 +527,19 @@ async function runTests() {
     passed++;
   else failed++;
 
+  // insaits-security-wrapper.js tests
+  console.log('\ninsaits-security-wrapper.js:');
+
   if (
-    await asyncTest('injects learned skills into session-start additional context', async () => {
-      const isoHome = path.join(os.tmpdir(), `ecc-skills-context-${Date.now()}`);
-      const learnedDir = path.join(isoHome, '.claude', 'skills', 'learned');
-      fs.mkdirSync(learnedDir, { recursive: true });
-      fs.mkdirSync(getCanonicalSessionsDir(isoHome), { recursive: true });
-
-      fs.writeFileSync(
-        path.join(learnedDir, 'testing-patterns.md'),
-        [
-          '# Testing Patterns',
-          '',
-          '## When to Use',
-          'Use for recurring flaky integration tests that need deterministic setup checks.',
-          '',
-          '## Solution',
-          'Verify service readiness before running the test body.',
-        ].join('\n'),
-      );
-      fs.mkdirSync(path.join(learnedDir, 'debugging-pattern'), { recursive: true });
-      fs.writeFileSync(
-        path.join(learnedDir, 'debugging-pattern', 'SKILL.md'),
-        [
-          '# Debugging Pattern',
-          '',
-          '## Trigger',
-          'Use when a CLI tool silently exits without a result payload.',
-        ].join('\n'),
-      );
-
-      try {
-        const result = await runScript(path.join(scriptsDir, 'session-start.js'), '', {
-          HOME: isoHome,
-          USERPROFILE: isoHome
-        });
-        assert.strictEqual(result.code, 0);
-        const additionalContext = getSessionStartAdditionalContext(result.stdout);
-        assert.ok(
-          additionalContext.includes('Available learned skills'),
-          `Should inject learned skills into additionalContext, got: ${additionalContext}`
-        );
-        assert.ok(additionalContext.includes('testing-patterns'), 'Should include the learned skill slug');
-        assert.ok(
-          additionalContext.includes('Use for recurring flaky integration tests'),
-          'Should include the learned skill trigger text'
-        );
-        assert.ok(additionalContext.includes('debugging-pattern'), 'Should include directory-style learned skills');
-        assert.ok(
-          additionalContext.includes('CLI tool silently exits'),
-          'Should summarize directory-style learned skill trigger text'
-        );
-      } finally {
-        fs.rmSync(isoHome, { recursive: true, force: true });
-      }
+    await asyncTest('passes through input unchanged when integration is disabled', async () => {
+      const stdinData = JSON.stringify({
+        tool_name: 'Write',
+        tool_input: { file_path: 'src/index.ts', content: 'console.log("ok");' }
+      });
+      const result = await runScript(path.join(scriptsDir, 'insaits-security-wrapper.js'), stdinData, { ECC_ENABLE_INSAITS: '' });
+      assert.strictEqual(result.code, 0, `Exit code should be 0, got ${result.code}`);
+      assert.strictEqual(result.stdout, stdinData, 'Should pass stdin through unchanged');
+      assert.strictEqual(result.stderr, '', 'Should stay silent when integration is disabled');
     })
   )
     passed++;
@@ -787,114 +643,6 @@ async function runTests() {
         const sessionFile = path.join(sessionsDir, `${today}-${expectedShortId}-session.tmp`);
 
         assert.ok(fs.existsSync(sessionFile), `Session file should exist: ${sessionFile}`);
-      } finally {
-        fs.rmSync(isoHome, { recursive: true, force: true });
-      }
-    })
-  )
-    passed++;
-  else failed++;
-
-  // Regression test for #1494: transcript_path UUID-derived shortId (last 8 chars)
-  // isolates sibling subprocess invocations while preserving getSessionIdShort()
-  // backward compatibility (same `.slice(-8)` convention).
-  if (
-    await asyncTest('derives shortId from transcript_path UUID when available', async () => {
-      const isoHome = path.join(os.tmpdir(), `ecc-session-transcript-${Date.now()}`);
-      const transcriptUuid = 'abcdef12-3456-4789-a012-bcdef3456789';
-      const expectedShortId = 'f3456789'; // Last 8 chars of UUID (matches getSessionIdShort convention)
-      const transcriptPath = path.join(isoHome, 'transcripts', `${transcriptUuid}.jsonl`);
-
-      try {
-        fs.mkdirSync(path.dirname(transcriptPath), { recursive: true });
-        fs.writeFileSync(transcriptPath, '');
-
-        const stdinJson = JSON.stringify({ transcript_path: transcriptPath });
-        await runScript(path.join(scriptsDir, 'session-end.js'), stdinJson, {
-          HOME: isoHome,
-          USERPROFILE: isoHome,
-          // Clear CLAUDE_SESSION_ID so parent-process env does not leak into the
-          // child and the test deterministically exercises the transcript_path
-          // branch (getSessionIdShort() is the alternative path that is not
-          // exercised here).
-          CLAUDE_SESSION_ID: ''
-        });
-
-        const sessionsDir = getCanonicalSessionsDir(isoHome);
-        const now = new Date();
-        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const sessionFile = path.join(sessionsDir, `${today}-${expectedShortId}-session.tmp`);
-
-        assert.ok(fs.existsSync(sessionFile), `Session file with transcript UUID shortId should exist: ${sessionFile}`);
-      } finally {
-        fs.rmSync(isoHome, { recursive: true, force: true });
-      }
-    })
-  )
-    passed++;
-  else failed++;
-
-  // Regression test for #1494: uppercase UUID hex digits should be normalized to
-  // lowercase so the filename is consistent with getSessionIdShort()'s output.
-  if (
-    await asyncTest('normalizes transcript UUID shortId to lowercase', async () => {
-      const isoHome = path.join(os.tmpdir(), `ecc-session-transcript-upper-${Date.now()}`);
-      const transcriptUuid = 'ABCDEF12-3456-4789-A012-BCDEF3456789';
-      const expectedShortId = 'f3456789'; // last 8 lowercased
-      const transcriptPath = path.join(isoHome, 'transcripts', `${transcriptUuid}.jsonl`);
-
-      try {
-        fs.mkdirSync(path.dirname(transcriptPath), { recursive: true });
-        fs.writeFileSync(transcriptPath, '');
-
-        const stdinJson = JSON.stringify({ transcript_path: transcriptPath });
-        await runScript(path.join(scriptsDir, 'session-end.js'), stdinJson, {
-          HOME: isoHome,
-          USERPROFILE: isoHome,
-          CLAUDE_SESSION_ID: ''
-        });
-
-        const sessionsDir = getCanonicalSessionsDir(isoHome);
-        const now = new Date();
-        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const sessionFile = path.join(sessionsDir, `${today}-${expectedShortId}-session.tmp`);
-
-        assert.ok(fs.existsSync(sessionFile), `Session file with lowercase shortId should exist: ${sessionFile}`);
-      } finally {
-        fs.rmSync(isoHome, { recursive: true, force: true });
-      }
-    })
-  )
-    passed++;
-  else failed++;
-
-  // Regression test for #1494: when CLAUDE_SESSION_ID and transcript_path refer to the
-  // same UUID, the derived shortId must be identical to the pre-fix behaviour so that
-  // existing .tmp files are not orphaned on upgrade.
-  if (
-    await asyncTest('matches getSessionIdShort when transcript UUID equals CLAUDE_SESSION_ID', async () => {
-      const isoHome = path.join(os.tmpdir(), `ecc-session-transcript-match-${Date.now()}`);
-      const sessionUuid = '11223344-5566-4778-8899-aabbccddeeff';
-      const expectedShortId = 'ccddeeff'; // last 8 chars of both transcript UUID and CLAUDE_SESSION_ID
-      const transcriptPath = path.join(isoHome, 'transcripts', `${sessionUuid}.jsonl`);
-
-      try {
-        fs.mkdirSync(path.dirname(transcriptPath), { recursive: true });
-        fs.writeFileSync(transcriptPath, '');
-
-        const stdinJson = JSON.stringify({ transcript_path: transcriptPath });
-        await runScript(path.join(scriptsDir, 'session-end.js'), stdinJson, {
-          HOME: isoHome,
-          USERPROFILE: isoHome,
-          CLAUDE_SESSION_ID: sessionUuid
-        });
-
-        const sessionsDir = getCanonicalSessionsDir(isoHome);
-        const now = new Date();
-        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const sessionFile = path.join(sessionsDir, `${today}-${expectedShortId}-session.tmp`);
-
-        assert.ok(fs.existsSync(sessionFile), `Session filename should match the pre-fix CLAUDE_SESSION_ID-based name: ${sessionFile}`);
       } finally {
         fs.rmSync(isoHome, { recursive: true, force: true });
       }
@@ -2159,33 +1907,6 @@ async function runTests() {
   else failed++;
 
   if (
-    test('hooks.json consolidates Bash hooks into one pre and one post dispatcher', () => {
-      const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
-      const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
-
-      const preBash = hooks.hooks.PreToolUse.filter(entry => entry.matcher === 'Bash');
-      const postBash = hooks.hooks.PostToolUse.filter(entry => entry.matcher === 'Bash');
-
-      assert.strictEqual(preBash.length, 1, 'Should have exactly one PreToolUse Bash dispatcher');
-      assert.strictEqual(postBash.length, 1, 'Should have exactly one PostToolUse Bash dispatcher');
-      assert.strictEqual(preBash[0].id, 'pre:bash:dispatcher');
-      assert.strictEqual(postBash[0].id, 'post:bash:dispatcher');
-
-      const preCommand = Array.isArray(preBash[0].hooks[0].command)
-        ? preBash[0].hooks[0].command.join(' ')
-        : preBash[0].hooks[0].command;
-      const postCommand = Array.isArray(postBash[0].hooks[0].command)
-        ? postBash[0].hooks[0].command.join(' ')
-        : postBash[0].hooks[0].command;
-
-      assert.ok(preCommand.includes('pre-bash-dispatcher.js'), 'PreToolUse Bash hook should use the pre dispatcher');
-      assert.ok(postCommand.includes('post-bash-dispatcher.js'), 'PostToolUse Bash hook should use the post dispatcher');
-    })
-  )
-    passed++;
-  else failed++;
-
-  if (
     test('SessionEnd marker hook is async and cleanup-safe', () => {
       const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
       const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
@@ -2201,27 +1922,6 @@ async function runTests() {
   else failed++;
 
   if (
-    test('all hook commands use string form for Claude Code schema compatibility', () => {
-      const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
-      const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
-
-      for (const [eventName, hookArray] of Object.entries(hooks.hooks)) {
-        for (const entry of hookArray) {
-          for (const hook of entry.hooks) {
-            assert.strictEqual(
-              typeof hook.command,
-              'string',
-              `${eventName}/${entry.id || entry.matcher || 'hook'} should use string command form`,
-            );
-          }
-        }
-      }
-    })
-  )
-    passed++;
-  else failed++;
-
-  if (
     test('all hook commands use node or approved shell wrappers', () => {
       const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
       const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
@@ -2230,14 +1930,13 @@ async function runTests() {
         for (const entry of hookArray) {
           for (const hook of entry.hooks) {
             if (hook.type === 'command') {
-              const commandText = Array.isArray(hook.command) ? hook.command.join(' ') : hook.command;
-              const commandStart = Array.isArray(hook.command) ? hook.command[0] : hook.command;
-              const isNode = commandStart === 'node' || (typeof commandStart === 'string' && commandStart.startsWith('node'));
-              const isNpx = commandStart === 'npx' || (typeof commandStart === 'string' && commandStart.startsWith('npx '));
-              const isSkillScript = commandText.includes('/skills/') && (/^(bash|sh)\s/.test(commandText) || commandText.includes('/skills/'));
+              const isNode = hook.command.startsWith('node');
+              const isNpx = hook.command.startsWith('npx ');
+              const isSkillScript = hook.command.includes('/skills/') && (/^(bash|sh)\s/.test(hook.command) || hook.command.startsWith('${CLAUDE_PLUGIN_ROOT}/skills/'));
+              const isHookShellWrapper = /^(bash|sh)\s+["']?\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/hooks\/run-with-flags-shell\.sh/.test(hook.command);
               assert.ok(
-                isNode || isNpx || isSkillScript,
-                `Hook command should use node or approved shell wrapper: ${commandText.substring(0, 100)}...`
+                isNode || isNpx || isSkillScript || isHookShellWrapper,
+                `Hook command should use node or approved shell wrapper: ${hook.command.substring(0, 100)}...`
               );
             }
           }
@@ -2259,25 +1958,13 @@ async function runTests() {
       const sessionStartHook = hooks.hooks.SessionStart?.[0]?.hooks?.[0];
 
       assert.ok(sessionStartHook, 'Should define a SessionStart hook');
-      const commandText = sessionStartHook.command;
-      assert.strictEqual(typeof sessionStartHook.command, 'string', 'SessionStart should use string command form for Claude Code compatibility');
-      assert.ok(
-        commandText.includes('session-start-bootstrap.js'),
-        'SessionStart should delegate to the extracted bootstrap script'
-      );
-      assert.ok(commandText.includes('CLAUDE_PLUGIN_ROOT'), 'SessionStart should use CLAUDE_PLUGIN_ROOT');
-      assert.ok(!commandText.includes('${CLAUDE_PLUGIN_ROOT}'), 'SessionStart should not depend on raw shell placeholder expansion');
-      assert.ok(!commandText.includes('find '), 'Should not scan arbitrary plugin paths with find');
-      assert.ok(!commandText.includes('head -n 1'), 'Should not pick the first matching plugin path');
-
-      // Verify the bootstrap script itself contains the expected logic
-      const bootstrapPath = path.join(__dirname, '..', '..', 'scripts', 'hooks', 'session-start-bootstrap.js');
-      assert.ok(fs.existsSync(bootstrapPath), 'Bootstrap script should exist at scripts/hooks/session-start-bootstrap.js');
-      const bootstrapSrc = fs.readFileSync(bootstrapPath, 'utf8');
-      assert.ok(bootstrapSrc.includes('session:start'), 'Bootstrap should invoke the session:start profile');
-      assert.ok(bootstrapSrc.includes('run-with-flags.js'), 'Bootstrap should resolve the runner script');
-      assert.ok(bootstrapSrc.includes('CLAUDE_PLUGIN_ROOT'), 'Bootstrap should consult CLAUDE_PLUGIN_ROOT');
-      assert.ok(bootstrapSrc.includes('plugins'), 'Bootstrap should probe known plugin roots');
+      assert.ok(sessionStartHook.command.startsWith('node -e "'), 'SessionStart should use inline node resolver');
+      assert.ok(sessionStartHook.command.includes('session:start'), 'SessionStart should invoke the session:start profile');
+      assert.ok(sessionStartHook.command.includes('run-with-flags.js'), 'SessionStart should resolve the runner script');
+      assert.ok(sessionStartHook.command.includes('CLAUDE_PLUGIN_ROOT'), 'SessionStart should consult CLAUDE_PLUGIN_ROOT');
+      assert.ok(sessionStartHook.command.includes('plugins'), 'SessionStart should probe known plugin roots');
+      assert.ok(!sessionStartHook.command.includes('find '), 'Should not scan arbitrary plugin paths with find');
+      assert.ok(!sessionStartHook.command.includes('head -n 1'), 'Should not pick the first matching plugin path');
     })
   )
     passed++;
@@ -2290,41 +1977,29 @@ async function runTests() {
       const sessionEndHooks = (hooks.hooks.SessionEnd || []).flatMap(entry => entry.hooks || []);
 
       for (const hook of [...stopHooks, ...sessionEndHooks]) {
-        const commandText = Array.isArray(hook.command) ? hook.command.join(' ') : hook.command;
-        assert.ok(
-          (Array.isArray(hook.command) && hook.command[0] === 'node' && hook.command[1] === '-e') ||
-          (typeof hook.command === 'string' && hook.command.startsWith('node -e "')),
-          'Lifecycle hook should use inline node resolver'
-        );
-        assert.ok(commandText.includes('run-with-flags.js'), 'Lifecycle hook should resolve the runner script');
-        assert.ok(commandText.includes('CLAUDE_PLUGIN_ROOT'), 'Lifecycle hook should consult CLAUDE_PLUGIN_ROOT');
-        assert.ok(!commandText.includes('${CLAUDE_PLUGIN_ROOT}'), 'Lifecycle hook should not depend on raw shell placeholder expansion');
-        assert.ok(commandText.includes('plugins'), 'Lifecycle hook should probe known plugin roots');
-        assert.ok(!commandText.includes('find '), 'Lifecycle hook should not scan arbitrary plugin paths with find');
-        assert.ok(!commandText.includes('head -n 1'), 'Lifecycle hook should not pick the first matching plugin path');
+        assert.ok(hook.command.startsWith('node -e "'), 'Lifecycle hook should use inline node resolver');
+        assert.ok(hook.command.includes('run-with-flags.js'), 'Lifecycle hook should resolve the runner script');
+        assert.ok(hook.command.includes('CLAUDE_PLUGIN_ROOT'), 'Lifecycle hook should consult CLAUDE_PLUGIN_ROOT');
+        assert.ok(hook.command.includes('plugins'), 'Lifecycle hook should probe known plugin roots');
+        assert.ok(!hook.command.includes('find '), 'Lifecycle hook should not scan arbitrary plugin paths with find');
+        assert.ok(!hook.command.includes('head -n 1'), 'Lifecycle hook should not pick the first matching plugin path');
       }
     })
   )
     passed++;
   else failed++;
   if (
-    test('script references use the safe inline resolver or plugin bootstrap', () => {
+    test('script references use CLAUDE_PLUGIN_ROOT variable or a safe inline resolver', () => {
       const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
       const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
 
       const checkHooks = hookArray => {
         for (const entry of hookArray) {
           for (const hook of entry.hooks) {
-            const commandText = Array.isArray(hook.command) ? hook.command.join(' ') : hook.command;
-            const commandStart = Array.isArray(hook.command) ? `${hook.command[0]} ${hook.command[1] || ''}`.trim() : hook.command;
-            if (hook.type === 'command' && commandText.includes('scripts/hooks/')) {
-              const usesInlineResolver = commandStart.startsWith('node -e') && commandText.includes('run-with-flags.js');
-              const usesPluginBootstrap = commandStart.startsWith('node -e') && commandText.includes('plugin-hook-bootstrap.js');
-              assert.ok(!commandText.includes('${CLAUDE_PLUGIN_ROOT}'), `Script paths should not depend on raw shell placeholder expansion: ${commandText.substring(0, 80)}...`);
-              assert.ok(
-                usesInlineResolver || usesPluginBootstrap,
-                `Script paths should use the inline resolver or plugin bootstrap: ${commandText.substring(0, 80)}...`
-              );
+            if (hook.type === 'command' && hook.command.includes('scripts/hooks/')) {
+              const usesInlineResolver = hook.command.startsWith('node -e') && hook.command.includes('run-with-flags.js');
+              const hasPluginRoot = hook.command.includes('${CLAUDE_PLUGIN_ROOT}') || usesInlineResolver;
+              assert.ok(hasPluginRoot, `Script paths should use CLAUDE_PLUGIN_ROOT: ${hook.command.substring(0, 80)}...`);
             }
           }
         }
@@ -2338,6 +2013,20 @@ async function runTests() {
     passed++;
   else failed++;
 
+  if (
+    test('InsAIts hook is opt-in and scoped to high-signal tool inputs', () => {
+      const hooksPath = path.join(__dirname, '..', '..', 'hooks', 'hooks.json');
+      const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+      const insaitsHook = hooks.hooks.PreToolUse.find(entry => entry.description && entry.description.includes('InsAIts'));
+
+      assert.ok(insaitsHook, 'Should define an InsAIts PreToolUse hook');
+      assert.strictEqual(insaitsHook.matcher, 'Bash|Write|Edit|MultiEdit', 'InsAIts hook should avoid matching every tool');
+      assert.ok(insaitsHook.description.includes('ECC_ENABLE_INSAITS=1'), 'InsAIts hook should document explicit opt-in');
+      assert.ok(insaitsHook.hooks[0].command.includes('insaits-security-wrapper.js'), 'InsAIts hook should execute through the JS wrapper');
+    })
+  )
+    passed++;
+  else failed++;
 
   // plugin.json validation
   console.log('\nplugin.json Validation:');
@@ -2760,13 +2449,10 @@ async function runTests() {
       const observerLoopSource = fs.readFileSync(path.join(__dirname, '..', '..', 'skills', 'continuous-learning-v2', 'agents', 'observer-loop.sh'), 'utf8');
 
       assert.ok(observerLoopSource.includes('ECC_OBSERVER_MAX_TURNS'), 'observer-loop should allow max-turn overrides');
-      assert.ok(observerLoopSource.includes('max_turns="${ECC_OBSERVER_MAX_TURNS:-20}"'), 'observer-loop should default to 20 turns');
+      assert.ok(observerLoopSource.includes('max_turns="${ECC_OBSERVER_MAX_TURNS:-10}"'), 'observer-loop should default to 10 turns');
       assert.ok(!observerLoopSource.includes('--max-turns 3'), 'observer-loop should not hardcode a 3-turn limit');
       assert.ok(observerLoopSource.includes('ECC_SKIP_OBSERVE=1'), 'observer-loop should suppress observe.sh for automated sessions');
       assert.ok(observerLoopSource.includes('ECC_HOOK_PROFILE=minimal'), 'observer-loop should run automated analysis with the minimal hook profile');
-      assert.ok(observerLoopSource.includes('prompt_content="$(cat "$prompt_file" 2>/dev/null || true)"'), 'observer-loop should read prompt_file into memory before claude is spawned');
-      assert.ok(observerLoopSource.includes('-p "$prompt_content"'), 'observer-loop should pass in-memory prompt content to claude');
-      assert.ok(!observerLoopSource.includes('-p "$(cat "$prompt_file")"'), 'observer-loop should not re-read prompt_file at invocation time');
     })
   )
     passed++;
@@ -4575,42 +4261,6 @@ async function runTests() {
         const additionalContext = getSessionStartAdditionalContext(result.stdout);
         assert.ok(additionalContext.includes('RECENT CONTENT HERE'), 'Should inject the 6.9-day-old session content');
         assert.ok(!additionalContext.includes('OLD CONTENT SHOULD NOT APPEAR'), 'Should NOT inject the 8-day-old session content');
-      } finally {
-        fs.rmSync(isoHome, { recursive: true, force: true });
-      }
-    })
-  )
-    passed++;
-  else failed++;
-
-  if (
-    await asyncTest('prunes session files older than the retention window', async () => {
-      const isoHome = path.join(os.tmpdir(), `ecc-start-prune-${Date.now()}`);
-      const sessionsDir = getCanonicalSessionsDir(isoHome);
-      fs.mkdirSync(sessionsDir, { recursive: true });
-      fs.mkdirSync(path.join(isoHome, '.claude', 'skills', 'learned'), { recursive: true });
-
-      const recentFile = path.join(sessionsDir, '2026-02-10-keepme-session.tmp');
-      fs.writeFileSync(recentFile, '# Recent Session\n\nKEEP ME');
-      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
-      fs.utimesSync(recentFile, fiveDaysAgo, fiveDaysAgo);
-
-      const expiredFile = path.join(sessionsDir, '2026-01-01-pruneme-session.tmp');
-      fs.writeFileSync(expiredFile, '# Expired Session\n\nDELETE ME');
-      const thirtyOneDaysAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
-      fs.utimesSync(expiredFile, thirtyOneDaysAgo, thirtyOneDaysAgo);
-
-      try {
-        const result = await runScript(path.join(scriptsDir, 'session-start.js'), '', {
-          HOME: isoHome,
-          USERPROFILE: isoHome,
-          ECC_SESSION_RETENTION_DAYS: '30',
-        });
-
-        assert.strictEqual(result.code, 0);
-        assert.ok(!fs.existsSync(expiredFile), 'Should delete expired session files beyond retention');
-        assert.ok(fs.existsSync(recentFile), 'Should keep recent session files inside retention');
-        assert.ok(result.stderr.includes('Pruned 1 expired session'), `Should report pruning activity, stderr: ${result.stderr}`);
       } finally {
         fs.rmSync(isoHome, { recursive: true, force: true });
       }

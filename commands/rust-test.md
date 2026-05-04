@@ -300,7 +300,7 @@ cargo test --no-fail-fast
 
 - `/rust-build` - Fix build errors
 - `/rust-review` - Review code after implementation
-- `verification-loop` skill - Run full verification loop
+- `/verify` - Run full verification loop
 
 ## Related
 

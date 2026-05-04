@@ -4,9 +4,7 @@ description: Restate requirements, assess risks, and create step-by-step impleme
 
 # Plan Command
 
-This command creates a comprehensive implementation plan before writing any code.
-
-Run inline by default. Do not call the Task tool or any subagent by default. This keeps `/plan` usable from plugin installs that ship commands without agent files.
+This command invokes the **planner** agent to create a comprehensive implementation plan before writing any code.
 
 ## What This Command Does
 
@@ -26,7 +24,7 @@ Use `/plan` when:
 
 ## How It Works
 
-The assistant will:
+The planner agent will:
 
 1. **Analyze the request** and restate requirements in clear terms
 2. **Break down into phases** with specific, actionable steps
@@ -40,7 +38,7 @@ The assistant will:
 ```
 User: /plan I need to add real-time notifications when markets resolve
 
-Assistant:
+Agent (planner):
 # Implementation Plan: Real-Time Market Resolution Notifications
 
 ## Requirements Restatement
@@ -95,7 +93,7 @@ Assistant:
 
 ## Important Notes
 
-**CRITICAL**: This command will **NOT** write any code until you explicitly confirm the plan with "yes" or "proceed" or similar affirmative response.
+**CRITICAL**: The planner agent will **NOT** write any code until you explicitly confirm the plan with "yes" or "proceed" or similar affirmative response.
 
 If you want changes, respond with:
 - "modify: [your changes]"
@@ -105,17 +103,13 @@ If you want changes, respond with:
 ## Integration with Other Commands
 
 After planning:
-- Use the `tdd-workflow` skill to implement with test-driven development
+- Use `/tdd` to implement with test-driven development
 - Use `/build-fix` if build errors occur
 - Use `/code-review` to review completed implementation
 
-> **Need deeper planning?** Use `/prp-plan` for artifact-producing planning with PRD integration, codebase analysis, and pattern extraction. Use `/prp-implement` to execute those plans with rigorous validation loops.
+## Related Agents
 
-## Optional Planner Agent
-
-ECC also provides a `planner` agent for manual installs that include agent files. Use it only when the local runtime already exposes that subagent and the user explicitly asks you to delegate planning.
-
-If the `planner` subagent is unavailable, continue planning inline instead of surfacing an "Agent type 'planner' not found" error.
+This command invokes the `planner` agent provided by ECC.
 
 For manual installs, the source file lives at:
 `agents/planner.md`
