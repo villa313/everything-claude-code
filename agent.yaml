@@ -47,6 +47,7 @@ skills:
   - cpp-coding-standards
   - cpp-testing
   - crosspost
+  - csharp-testing
   - customs-trade-compliance
   - data-scraper-agent
   - database-migrations
@@ -60,6 +61,7 @@ skills:
   - dmux-workflows
   - docker-patterns
   - documentation-lookup
+  - dotnet-patterns
   - e2e-testing
   - energy-procurement
   - enterprise-agent-ops
@@ -165,6 +167,9 @@ commands:
   - cpp-build
   - cpp-review
   - cpp-test
+  - csharp-build
+  - csharp-review
+  - csharp-test
   - ecc-guide
   - evolve
   - fastapi-review
