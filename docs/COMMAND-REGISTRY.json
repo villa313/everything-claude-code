@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalCommands": 79,
+  "totalCommands": 82,
   "commands": [
     {
       "command": "aside",
@@ -98,6 +98,53 @@
         "tdd-workflow"
       ],
       "path": "commands/cpp-test.md"
+    },
+    {
+      "command": "csharp-build",
+      "description": "Fix C# / .NET build errors, CS compiler errors, and NuGet dependency issues incrementally. Invokes the csharp-build-resolver agent for minimal, surgical fixes.",
+      "type": "testing",
+      "primaryAgents": [
+        "csharp-build-resolver"
+      ],
+      "allAgents": [
+        "csharp-build-resolver"
+      ],
+      "skills": [
+        "dotnet-patterns"
+      ],
+      "path": "commands/csharp-build.md"
+    },
+    {
+      "command": "csharp-review",
+      "description": "Comprehensive C# / ASP.NET Core code review for async correctness, EF Core patterns, nullable reference types, security, and idiomatic .NET. Invokes the csharp-reviewer agent.",
+      "type": "testing",
+      "primaryAgents": [
+        "csharp-reviewer"
+      ],
+      "allAgents": [
+        "csharp-reviewer"
+      ],
+      "skills": [
+        "csharp-testing",
+        "dotnet-patterns"
+      ],
+      "path": "commands/csharp-review.md"
+    },
+    {
+      "command": "csharp-test",
+      "description": "Enforce TDD workflow for C#. Write xUnit tests first, then implement. Verify 80%+ coverage with coverlet / dotnet test --collect.",
+      "type": "testing",
+      "primaryAgents": [
+        "csharp-reviewer"
+      ],
+      "allAgents": [
+        "csharp-reviewer"
+      ],
+      "skills": [
+        "csharp-testing",
+        "dotnet-patterns"
+      ],
+      "path": "commands/csharp-test.md"
     },
     {
       "command": "ecc-guide",
@@ -868,9 +915,13 @@
       "planning": 2,
       "refactoring": 1,
       "review": 9,
-      "testing": 51
+      "testing": 54
     },
     "topAgents": [
+      {
+        "agent": "csharp-reviewer",
+        "count": 2
+      },
       {
         "agent": "dart-build-resolver",
         "count": 2
@@ -888,6 +939,10 @@
         "count": 1
       },
       {
+        "agent": "csharp-build-resolver",
+        "count": 1
+      },
+      {
         "agent": "go-build-resolver",
         "count": 1
       },
@@ -902,14 +957,6 @@
       {
         "agent": "kotlin-reviewer",
         "count": 1
-      },
-      {
-        "agent": "planner",
-        "count": 1
-      },
-      {
-        "agent": "python-reviewer",
-        "count": 1
       }
     ],
     "topSkills": [
@@ -923,6 +970,10 @@
       },
       {
         "skill": "accessibility",
+        "count": 3
+      },
+      {
+        "skill": "dotnet-patterns",
         "count": 3
       },
       {
@@ -942,15 +993,11 @@
         "count": 2
       },
       {
+        "skill": "csharp-testing",
+        "count": 2
+      },
+      {
         "skill": "ecc-guide",
-        "count": 2
-      },
-      {
-        "skill": "golang-patterns",
-        "count": 2
-      },
-      {
-        "skill": "golang-testing",
         "count": 2
       }
     ]
