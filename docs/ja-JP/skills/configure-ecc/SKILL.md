@@ -17,7 +17,7 @@ Everything Claude Code プロジェクトのインタラクティブなステッ
 ## 前提条件
 
 このスキルは起動前に Claude Code からアクセス可能である必要があります。ブートストラップには2つの方法があります：
-1. **プラグイン経由**: `/plugin install everything-claude-code` — プラグインがこのスキルを自動的にロードします
+1. **プラグイン経由**: `/plugin install everything-claude-code@everything-claude-code` — プラグインがこのスキルを自動的にロードします
 2. **手動**: このスキルのみを `~/.claude/skills/configure-ecc/SKILL.md` にコピーし、"configure ecc" と言って起動します
 
 ---
@@ -126,13 +126,24 @@ Options:
 
 | スキル | 説明 |
 |-------|-------------|
-| `project-guidelines-example` | プロジェクト固有のスキルを作成するためのテンプレート |
+| `docs/examples/project-guidelines-template.md` | プロジェクト固有のスキルを作成するためのテンプレート |
 
 ### 2c: インストールの実行
 
-選択された各スキルについて、スキルディレクトリ全体をコピーします：
+選択された各スキルについて、正しいソースルートからスキルディレクトリ全体をコピーします：
+
 ```bash
-cp -r $ECC_ROOT/skills/<skill-name> $TARGET/skills/
+# コアスキルは .agents/skills/ 配下にあります
+cp -R "$ECC_ROOT/.agents/skills/<skill-name>" "$TARGET/skills/"
+
+# ニッチスキルは skills/ 配下にあります
+cp -R "$ECC_ROOT/skills/<skill-name>" "$TARGET/skills/"
+```
+
+glob で取得したソースディレクトリを処理するときは、trailing slash 付きのソースをそのまま `cp` に渡さないでください。宛先名にディレクトリ名を明示します：
+
+```bash
+cp -R "${src%/}" "$TARGET/skills/$(basename "${src%/}")"
 ```
 
 注: `continuous-learning` と `continuous-learning-v2` には追加ファイル（config.json、フック、スクリプト）があります — SKILL.md だけでなく、ディレクトリ全体がコピーされることを確認してください。

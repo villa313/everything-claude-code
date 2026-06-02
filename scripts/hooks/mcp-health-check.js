@@ -24,7 +24,10 @@ const DEFAULT_TTL_MS = 2 * 60 * 1000;
 const DEFAULT_TIMEOUT_MS = 5000;
 const DEFAULT_BACKOFF_MS = 30 * 1000;
 const MAX_BACKOFF_MS = 10 * 60 * 1000;
-const HEALTHY_HTTP_CODES = new Set([200, 201, 202, 204, 301, 302, 303, 304, 307, 308, 405]);
+// The preflight HTTP probe only checks reachability; it does not have access to
+// Claude Code's stored OAuth bearer token. Treat auth-gated responses as
+// reachable so the real MCP client can attempt the authenticated call.
+const HEALTHY_HTTP_CODES = new Set([200, 201, 202, 204, 301, 302, 303, 304, 307, 308, 400, 401, 403, 405]);
 const RECONNECT_STATUS_CODES = new Set([401, 403, 429, 503]);
 const FAILURE_PATTERNS = [
   { code: 401, pattern: /\b401\b|unauthori[sz]ed|auth(?:entication)?\s+(?:failed|expired|invalid)/i },
@@ -305,10 +308,15 @@ function probeCommandServer(serverName, config) {
 
     let stderr = '';
     let done = false;
+    let timer = null;
 
     function finish(result) {
       if (done) return;
       done = true;
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
       resolve(result);
     }
 
@@ -351,7 +359,19 @@ function probeCommandServer(serverName, config) {
       });
     });
 
-    const timer = setTimeout(() => {
+    timer = setTimeout(() => {
+      // A fast-crashing stdio server can finish before the timer callback runs
+      // on a loaded machine. Check the process state again before classifying it
+      // as healthy on timeout.
+      if (child.exitCode !== null || child.signalCode !== null) {
+        finish({
+          ok: false,
+          statusCode: child.exitCode,
+          reason: stderr.trim() || `process exited before handshake (${child.signalCode || child.exitCode || 'unknown'})`
+        });
+        return;
+      }
+
       try {
         child.kill('SIGTERM');
       } catch {

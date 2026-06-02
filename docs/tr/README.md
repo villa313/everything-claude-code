@@ -15,7 +15,7 @@
 ![Perl](https://img.shields.io/badge/-Perl-39457E?logo=perl&logoColor=white)
 ![Markdown](https://img.shields.io/badge/-Markdown-000000?logo=markdown&logoColor=white)
 
-> **50K+ yıldız** | **6K+ fork** | **30 katkıda bulunan** | **6 dil desteği** | **Anthropic Hackathon Kazananı**
+> **140K+ yıldız** | **21K+ fork** | **170+ katkıda bulunan** | **12+ dil ekosistemi** | **Anthropic Hackathon Kazananı**
 
 ---
 
@@ -23,7 +23,7 @@
 
 **Dil / Language / 语言 / 語言**
 
-[**English**](../../README.md) | [简体中文](../../README.zh-CN.md) | [繁體中文](../zh-TW/README.md) | [日本語](../ja-JP/README.md) | [한국어](../ko-KR/README.md) | [**Türkçe**](README.md)
+[**English**](../../README.md) | [Português (Brasil)](../pt-BR/README.md) | [简体中文](../../README.zh-CN.md) | [繁體中文](../zh-TW/README.md) | [日本語](../ja-JP/README.md) | [한국어](../ko-KR/README.md) | [**Türkçe**](README.md)
 
 </div>
 
@@ -33,7 +33,7 @@
 
 Sadece konfigürasyon dosyaları değil. Tam bir sistem: skill'ler, instinct'ler, memory optimizasyonu, sürekli öğrenme, güvenlik taraması ve araştırma odaklı geliştirme. 10+ ay boyunca gerçek ürünler inşa ederken yoğun günlük kullanımla evrimleşmiş production-ready agent'lar, hook'lar, command'lar, rule'lar ve MCP konfigürasyonları.
 
-**Claude Code**, **Codex**, **Cowork** ve diğer AI agent harness'larında çalışır.
+**Claude Code**, **Codex**, **Cursor**, **OpenCode**, **Gemini** ve diğer AI agent harness'larında çalışır.
 
 ---
 
@@ -79,6 +79,15 @@ Bu repository yalnızca ham kodu içerir. Rehberler her şeyi açıklıyor.
 
 ## Yenilikler
 
+### v2.0.0-rc.1 — Surface Sync, Operatör İş Akışları ve ECC 2.0 Alpha (Nis 2026)
+
+- **Public surface canlı repo ile senkronlandı** — metadata, katalog sayıları, plugin manifest'leri ve kurulum odaklı dokümanlar artık gerçek OSS yüzeyiyle eşleşiyor.
+- **Operatör ve dışa dönük iş akışları büyüdü** — `brand-voice`, `social-graph-ranker`, `customer-billing-ops`, `google-workspace-ops` ve ilgili operatör skill'leri aynı sistem içinde tamamlandı.
+- **Medya ve lansman araçları** — `manim-video`, `remotion-video-creation` ve sosyal yayın yüzeyleri teknik anlatım ve duyuru akışlarını aynı repo içine taşıdı.
+- **Framework ve ürün yüzeyi genişledi** — `nestjs-patterns`, daha zengin Codex/OpenCode kurulum yüzeyleri ve çapraz harness paketleme iyileştirmeleri repo'yu Claude Code dışına da taşıdı.
+- **ECC 2.0 alpha repoda** — `ecc2/` altındaki Rust kontrol katmanı artık yerelde derleniyor ve `dashboard`, `start`, `sessions`, `status`, `stop`, `resume` ve `daemon` komutlarını sunuyor.
+- **Ekosistem sağlamlaştırma** — AgentShield, ECC Tools maliyet kontrolleri, billing portal işleri ve web yüzeyi çekirdek plugin etrafında birlikte gelişmeye devam ediyor.
+
 ### v1.9.0 — Seçici Kurulum & Dil Genişlemesi (Mar 2026)
 
 - **Seçici kurulum mimarisi** — `install-plan.js` ve `install-apply.js` ile manifest-tabanlı kurulum pipeline'ı, hedefli component kurulumu için. State store neyin kurulu olduğunu takip eder ve artımlı güncellemelere olanak sağlar.
@@ -113,10 +122,10 @@ Bu repository yalnızca ham kodu içerir. Rehberler her şeyi açıklıyor.
 
 ```bash
 # Marketplace ekle
-/plugin marketplace add affaan-m/everything-claude-code
+/plugin marketplace add https://github.com/affaan-m/everything-claude-code
 
 # Plugin'i kur
-/plugin install everything-claude-code@everything-claude-code
+/plugin install everything-claude-code
 ```
 
 ### Adım 2: Rule'ları Kurun (Gerekli)
@@ -391,8 +400,8 @@ Her component tamamen bağımsızdır.
 <summary><b>Bu Cursor / OpenCode / Codex / Antigravity ile çalışır mı?</b></summary>
 
 Evet. ECC çapraz platformdur:
-- **Cursor**: `.cursor/` içinde önceden çevrilmiş config'ler. [Cursor IDE Desteği](#cursor-ide-desteği) bölümüne bakın.
-- **OpenCode**: `.opencode/` içinde tam plugin desteği. [OpenCode Desteği](#-opencode-desteği) bölümüne bakın.
+- **Cursor**: `.cursor/` içinde önceden çevrilmiş config'ler. [Cursor IDE Desteği](../../README.md#cursor-ide-support) bölümüne bakın.
+- **OpenCode**: `.opencode/` içinde tam plugin desteği. [OpenCode Desteği](../../README.md#opencode-support) bölümüne bakın.
 - **Codex**: macOS app ve CLI için birinci sınıf destek. PR [#257](https://github.com/affaan-m/everything-claude-code/pull/257)'ye bakın.
 - **Antigravity**: İş akışları, skill'ler ve `.agent/` içinde düzleştirilmiş rule'lar için sıkı entegre kurulum.
 - **Claude Code**: Native — bu birincil hedeftir.
@@ -441,7 +450,7 @@ Lütfen katkıda bulunun! Rehber için [CONTRIBUTING.md](../../CONTRIBUTING.md)'
 ### Katkı Fikirleri
 
 - Dile özel skill'ler (Rust, C#, Kotlin, Java) — Go, Python, Perl, Swift ve TypeScript zaten dahil
-- Framework'e özel config'ler (Rails, FastAPI, NestJS) — Django, Spring Boot, Laravel zaten dahil
+- Framework'e özel config'ler (Rails, FastAPI) — Django, NestJS, Spring Boot ve Laravel zaten dahil
 - DevOps agent'ları (Kubernetes, Terraform, AWS, Docker)
 - Test stratejileri (farklı framework'ler, görsel regresyon)
 - Domain'e özel bilgi (ML, data engineering, mobile)

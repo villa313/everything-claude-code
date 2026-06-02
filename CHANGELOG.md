@@ -1,5 +1,59 @@
 # Changelog
 
+## 2.0.0-rc.1 - 2026-04-28
+
+### Highlights
+
+- Adds the public ECC 2.0 release-candidate surface for the Hermes operator story.
+- Documents ECC as the reusable cross-harness substrate across Claude Code, Codex, Cursor, OpenCode, and Gemini.
+- Adds a sanitized Hermes import skill surface instead of publishing private operator state.
+
+### Release Surface
+
+- Updated package, plugin, marketplace, OpenCode, agent, and README metadata to `2.0.0-rc.1`.
+- Added `docs/releases/2.0.0-rc.1/` with release notes, social drafts, launch checklist, handoff notes, and demo prompts.
+- Added `docs/architecture/cross-harness.md` and regression coverage for the ECC/Hermes boundary.
+- Kept `ecc2/` versioning independent for now; it remains an alpha control-plane scaffold unless release engineering decides otherwise.
+
+### Notes
+
+- This is a release candidate, not a GA claim for the full ECC 2.0 control-plane roadmap.
+- Prerelease npm publishing should use the `next` dist-tag unless release engineering explicitly chooses otherwise.
+
+## 1.10.0 - 2026-04-05
+
+### Highlights
+
+- Public release surface synced to the live repo after multiple weeks of OSS growth and backlog merges.
+- Operator workflow lane expanded with voice, graph-ranking, billing, workspace, and outbound skills.
+- Media generation lane expanded with Manim and Remotion-first launch tooling.
+- ECC 2.0 alpha control-plane binary now builds locally from `ecc2/` and exposes the first usable CLI/TUI surface.
+
+### Release Surface
+
+- Updated plugin, marketplace, Codex, OpenCode, and agent metadata to `1.10.0`.
+- Synced published counts to the live OSS surface: 38 agents, 156 skills, 72 commands.
+- Refreshed top-level install-facing docs and marketplace descriptions to match current repo state.
+
+### New Workflow Lanes
+
+- `brand-voice` — canonical source-derived writing-style system.
+- `social-graph-ranker` — weighted warm-intro graph ranking primitive.
+- `connections-optimizer` — network pruning/addition workflow on top of graph ranking.
+- `customer-billing-ops`, `google-workspace-ops`, `project-flow-ops`, `workspace-surface-audit`.
+- `manim-video`, `remotion-video-creation`, `nestjs-patterns`.
+
+### ECC 2.0 Alpha
+
+- `cargo build --manifest-path ecc2/Cargo.toml` passes on the repository baseline.
+- `ecc-tui` currently exposes `dashboard`, `start`, `sessions`, `status`, `stop`, `resume`, and `daemon`.
+- The alpha is real and usable for local experimentation, but the broader control-plane roadmap remains incomplete and should not be treated as GA.
+
+### Notes
+
+- The Claude plugin remains limited by platform-level rules distribution constraints; the selective install / OSS path is still the most reliable full install.
+- This release is a repo-surface correction and ecosystem sync, not a claim that the full ECC 2.0 roadmap is complete.
+
 ## 1.9.0 - 2026-03-20
 
 ### Highlights

@@ -19,7 +19,7 @@ origin: ECC
 
 此技能必须在激活前对 Claude Code 可访问。有两种引导方式：
 
-1. **通过插件**: `/plugin install everything-claude-code` — 插件会自动加载此技能
+1. **通过插件**: `/plugin install everything-claude-code@everything-claude-code` — 插件会自动加载此技能
 2. **手动**: 仅将此技能复制到 `~/.claude/skills/configure-ecc/SKILL.md`，然后通过说 "configure ecc" 激活
 
 ***
@@ -162,13 +162,14 @@ mkdir -p $TARGET/skills $TARGET/rules
 | `investor-materials` | 宣传文稿、一页简介、投资者备忘录和财务模型 |
 | `investor-outreach` | 个性化的投资者冷邮件、熟人介绍和后续跟进 |
 
-**类别：研究与API（3项技能）**
+**类别：研究与API（2项技能）**
 
 | 技能 | 描述 |
 |-------|-------------|
 | `deep-research` | 使用 firecrawl 和 exa MCP 进行多源深度研究，并生成带引用的报告 |
 | `exa-search` | 通过 Exa MCP 进行网络、代码、公司和人员的神经搜索 |
-| `claude-api` | Anthropic Claude API 模式：消息、流式处理、工具使用、视觉、批处理、Agent SDK |
+
+`claude-api` 是 Anthropic 官方技能；需要时请从 [`anthropics/skills`](https://github.com/anthropics/skills) 安装官方版本，而不是通过 ECC 重复打包。
 
 **类别：社交与内容分发（2项技能）**
 
@@ -194,14 +195,24 @@ mkdir -p $TARGET/skills $TARGET/rules
 
 | 技能 | 描述 |
 |-------|-------------|
-| `project-guidelines-example` | 用于创建项目特定技能的模板 |
+| `docs/examples/project-guidelines-template.md` | 用于创建项目特定技能的模板 |
 
 ### 2d: 执行安装
 
-对于每个选定的技能，复制整个技能目录：
+对于每个选定的技能，请从正确的源目录复制整个技能目录：
 
 ```bash
-cp -r $ECC_ROOT/skills/<skill-name> $TARGET/skills/
+# 核心技能位于 .agents/skills/
+cp -R "$ECC_ROOT/.agents/skills/<skill-name>" "$TARGET/skills/"
+
+# 细分技能位于 skills/
+cp -R "$ECC_ROOT/skills/<skill-name>" "$TARGET/skills/"
+```
+
+遍历 glob 得到的源目录时，不要把带 trailing slash 的源路径直接传给 `cp`。显式使用目录名作为目标名：
+
+```bash
+cp -R "${src%/}" "$TARGET/skills/$(basename "${src%/}")"
 ```
 
 注意：`continuous-learning` 和 `continuous-learning-v2` 有额外的文件（config.json、钩子、脚本）——确保复制整个目录，而不仅仅是 SKILL.md。

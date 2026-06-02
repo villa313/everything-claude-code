@@ -76,6 +76,12 @@ test('observe.sh default throttle is 20 observations per signal', () => {
   assert.ok(content.includes('ECC_OBSERVER_SIGNAL_EVERY_N:-20'), 'Default signal frequency should be every 20 observations');
 });
 
+test('observe.sh touches observer activity marker on each observation', () => {
+  const content = fs.readFileSync(observeShPath, 'utf8');
+  assert.ok(content.includes('ACTIVITY_FILE="${PROJECT_DIR}/.observer-last-activity"'), 'observe.sh should define a project-scoped activity marker');
+  assert.ok(content.includes('touch "$ACTIVITY_FILE"'), 'observe.sh should update activity marker during observation capture');
+});
+
 // ──────────────────────────────────────────────────────
 // Test group 2: observer-loop.sh re-entrancy guard
 // ──────────────────────────────────────────────────────
@@ -126,6 +132,19 @@ test('default cooldown is 60 seconds', () => {
   assert.ok(content.includes('ECC_OBSERVER_ANALYSIS_COOLDOWN:-60'), 'Default cooldown should be 60 seconds');
 });
 
+test('observer-loop.sh defines idle timeout fallback', () => {
+  const content = fs.readFileSync(observerLoopPath, 'utf8');
+  assert.ok(content.includes('IDLE_TIMEOUT_SECONDS'), 'observer-loop.sh should define an idle timeout');
+  assert.ok(content.includes('ECC_OBSERVER_IDLE_TIMEOUT_SECONDS:-1800'), 'Default idle timeout should be 30 minutes');
+});
+
+test('observer-loop.sh checks session lease directory before self-termination', () => {
+  const content = fs.readFileSync(observerLoopPath, 'utf8');
+  assert.ok(content.includes('SESSION_LEASE_DIR="${PROJECT_DIR}/.observer-sessions"'), 'observer-loop.sh should track active observer session leases');
+  assert.ok(content.includes('has_active_session_leases'), 'observer-loop.sh should define active session lease checks');
+  assert.ok(content.includes('exit_if_idle_without_sessions'), 'observer-loop.sh should define idle self-termination helper');
+});
+
 // ──────────────────────────────────────────────────────
 // Test group 4: Tail-based sampling (no full file load)
 // ──────────────────────────────────────────────────────
@@ -145,7 +164,8 @@ test('default max analysis lines is 500', () => {
 test('analysis temp file is created and cleaned up', () => {
   const content = fs.readFileSync(observerLoopPath, 'utf8');
   assert.ok(content.includes('ecc-observer-analysis'), 'Should create a temp analysis file');
-  assert.ok(content.includes('rm -f "$prompt_file" "$analysis_file"'), 'Should clean up both prompt and analysis temp files');
+  assert.ok(content.includes('rm -f "$prompt_file"'), 'Should clean up the prompt temp file after loading it');
+  assert.ok(content.includes('rm -f "$analysis_file"'), 'Should clean up the analysis temp file');
 });
 
 test('observer-loop uses project-local temp directory for analysis artifacts', () => {
@@ -153,6 +173,13 @@ test('observer-loop uses project-local temp directory for analysis artifacts', (
   assert.ok(content.includes('observer_tmp_dir="${PROJECT_DIR}/.observer-tmp"'), 'Should keep observer temp files inside the project');
   assert.ok(content.includes('mktemp "${observer_tmp_dir}/ecc-observer-analysis.'), 'Analysis temp file should use the project temp dir');
   assert.ok(content.includes('mktemp "${observer_tmp_dir}/ecc-observer-prompt.'), 'Prompt temp file should use the project temp dir');
+});
+
+test('observer-loop loads prompt content before invoking claude', () => {
+  const content = fs.readFileSync(observerLoopPath, 'utf8');
+  assert.ok(content.includes('prompt_content="$(cat "$prompt_file" 2>/dev/null || true)"'), 'Prompt should be read into memory before the claude invocation');
+  assert.ok(content.includes('-p "$prompt_content"'), 'Claude should receive the in-memory prompt content');
+  assert.ok(!content.includes('-p "$(cat "$prompt_file")"'), 'Claude should not depend on re-reading the prompt file during invocation');
 });
 
 test('observer-loop prompt requires direct instinct writes without asking permission', () => {
@@ -176,6 +203,63 @@ test('prompt references analysis_file not full OBSERVATIONS_FILE', () => {
   assert.ok(heredocEnd > heredocStart, 'Should find prompt heredoc end');
   const promptSection = content.substring(heredocStart, heredocEnd);
   assert.ok(promptSection.includes('${analysis_relpath}'), 'Prompt should point Claude at the sampled analysis file (via relative path), not the full observations file');
+});
+
+test('observer-loop wait helper retries SIGUSR1-interrupted waits while claude child is alive', () => {
+  if (process.platform === 'win32') {
+    return;
+  }
+
+  const content = fs.readFileSync(observerLoopPath, 'utf8');
+  const helperMatch = content.match(/wait_for_claude_analysis\(\) \{[\s\S]*?\n\}/);
+  assert.ok(helperMatch, 'observer-loop.sh should define wait_for_claude_analysis helper');
+
+  const script = [
+    'set +e',
+    helperMatch[0],
+    'trap ":" USR1',
+    '( sleep 0.35; exit 0 ) &',
+    'claude_child=$!',
+    '( sleep 0.05; kill -USR1 $$ ) &',
+    'signaler=$!',
+    'wait_for_claude_analysis "$claude_child"',
+    'status=$?',
+    'wait "$signaler" 2>/dev/null || true',
+    'exit "$status"'
+  ].join('\n');
+
+  const result = spawnSync('bash', ['-c', script], {
+    encoding: 'utf8',
+    timeout: 5000
+  });
+
+  assert.strictEqual(result.status, 0, `interrupted wait should return child exit 0, got ${result.status}; stderr: ${result.stderr}`);
+});
+
+test('observer-loop wait helper preserves real nonzero claude exits', () => {
+  if (process.platform === 'win32') {
+    return;
+  }
+
+  const content = fs.readFileSync(observerLoopPath, 'utf8');
+  const helperMatch = content.match(/wait_for_claude_analysis\(\) \{[\s\S]*?\n\}/);
+  assert.ok(helperMatch, 'observer-loop.sh should define wait_for_claude_analysis helper');
+
+  const script = [
+    'set +e',
+    helperMatch[0],
+    '( sleep 0.05; exit 7 ) &',
+    'claude_child=$!',
+    'wait_for_claude_analysis "$claude_child"',
+    'exit "$?"'
+  ].join('\n');
+
+  const result = spawnSync('bash', ['-c', script], {
+    encoding: 'utf8',
+    timeout: 5000
+  });
+
+  assert.strictEqual(result.status, 7, `real child failure should be preserved, got ${result.status}; stderr: ${result.stderr}`);
 });
 
 // ──────────────────────────────────────────────────────

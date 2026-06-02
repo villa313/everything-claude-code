@@ -17,9 +17,9 @@ rules/
 ├── typescript/      # TypeScript/JavaScript specific
 ├── python/          # Python specific
 ├── golang/          # Go specific
+├── web/             # Web and frontend specific
 ├── swift/           # Swift specific
-├── php/             # PHP specific
-└── csharp/          # C# specific
+└── php/             # PHP specific
 ```
 
 - **common/** contains universal principles — no language-specific code examples.
@@ -34,9 +34,9 @@ rules/
 ./install.sh typescript
 ./install.sh python
 ./install.sh golang
+./install.sh web
 ./install.sh swift
 ./install.sh php
-./install.sh csharp
 
 # Install multiple languages at once
 ./install.sh typescript python
@@ -58,9 +58,9 @@ cp -r rules/common ~/.claude/rules/common
 cp -r rules/typescript ~/.claude/rules/typescript
 cp -r rules/python ~/.claude/rules/python
 cp -r rules/golang ~/.claude/rules/golang
+cp -r rules/web ~/.claude/rules/web
 cp -r rules/swift ~/.claude/rules/swift
 cp -r rules/php ~/.claude/rules/php
-cp -r rules/csharp ~/.claude/rules/csharp
 
 # Attention ! ! ! Configure according to your actual project requirements; the configuration here is for reference only.
 ```
@@ -89,12 +89,14 @@ To add support for a new language (e.g., `rust/`):
    ```
 4. Reference existing skills if available, or create new ones under `skills/`.
 
+For non-language domains like `web/`, follow the same layered pattern when there is enough reusable domain-specific guidance to justify a standalone ruleset.
+
 ## Rule Priority
 
 When language-specific rules and common rules conflict, **language-specific rules take precedence** (specific overrides general). This follows the standard layered configuration pattern (similar to CSS specificity or `.gitignore` precedence).
 
 - `rules/common/` defines universal defaults applicable to all projects.
-- `rules/golang/`, `rules/python/`, `rules/swift/`, `rules/php/`, `rules/typescript/`, `rules/csharp/`, etc. override those defaults where language idioms differ.
+- `rules/golang/`, `rules/python/`, `rules/swift/`, `rules/php/`, `rules/typescript/`, etc. override those defaults where language idioms differ.
 
 ### Example
 
