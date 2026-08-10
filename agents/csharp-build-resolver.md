@@ -1,7 +1,7 @@
 ---
 name: csharp-build-resolver
 description: C#/.NET build, compilation, and NuGet dependency error resolution specialist. Fixes build errors, CS compiler errors, and dotnet CLI issues with minimal changes. Use when C# or ASP.NET Core builds fail.
-tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
+tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 ---
 

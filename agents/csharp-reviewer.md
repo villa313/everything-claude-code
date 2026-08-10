@@ -1,7 +1,7 @@
 ---
 name: csharp-reviewer
 description: Expert C# and ASP.NET Core code reviewer specializing in idiomatic .NET, async/await correctness, EF Core patterns, nullable reference types, security, and performance. Use for all C# code changes. MUST BE USED for C# and ASP.NET Core projects.
-tools: ["Read", "Grep", "Glob", "Bash"]
+tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
 
