@@ -166,7 +166,7 @@ Access to 69 agents, 286 skills, and 97 legacy command shims, plus hooks, rules,
 
 | Included         |       Count | What it gives you                                                                    |
 | ---------------- | ----------: | ------------------------------------------------------------------------------------ |
-| Agents           |   68 agents | Planning, review, build repair, security, architecture, and domain work              |
+| Agents           |   69 agents | Planning, review, build repair, security, architecture, and domain work              |
 | Skills           |  286 skills | TDD, research, security, docs, frontend, data, ML, operations, and more              |
 | Commands         | 97 commands | Convenient entry points while ECC moves to a skills-first surface                    |
 | Hooks and memory |     Runtime | Enforcement, session summaries, continuous learning, instincts, and context controls |
@@ -1073,7 +1073,7 @@ This repo is the raw code. The guides explain everything.
 
 ```text
 ECC/
-|-- agents/           # 68 specialized subagents for delegation
+|-- agents/           # 69 specialized subagents for delegation
 |-- skills/           # 284 reusable workflows loaded on demand
 |-- commands/         # 97 maintained slash-command shims
 |-- rules/            # opt-in common and language standards

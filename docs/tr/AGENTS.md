@@ -141,7 +141,7 @@ Başarısızlık sorunlarını giderin: test izolasyonunu kontrol edin → mockl
 ## Proje Yapısı
 
 ```
-agents/          — 68 özel subagent
+agents/          — 69 özel subagent
 skills/          — 286 iş akışı skillleri ve alan bilgisi
 commands/        — 97 slash command
 hooks/           — Tetikleyici tabanlı otomasyonlar
