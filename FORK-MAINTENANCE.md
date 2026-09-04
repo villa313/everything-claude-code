@@ -81,6 +81,7 @@ Safety properties worth preserving if you rewrite it:
 - Creates a `backup/pre-sync-<date>` branch before merging
 - Aborts and changes nothing if conflicts fall outside the known count/version allowlist
 - Never pushes on its own — the push is always a human decision
+- Re-applies the fork pointer in `CLAUDE.md` after every merge (see below)
 - Refuses to compare test results when `node_modules` is missing, and flags >50 failures as
   a broken environment rather than a bad merge
 
@@ -121,6 +122,15 @@ node scripts/ci/catalog.js                  # JSON report, no writes
 `tests/docs/configure-ecc-install-paths.test.js`. Patch it by hand.
 **Leave `docs/es` and `docs/ja-JP` alone** — their counts are intentionally stale upstream;
 editing them creates a conflict on every future merge.
+
+**`CLAUDE.md` carries a fork-only pointer** to this file, and it *is* in the auto-resolve
+allowlist — meaning a conflict there is resolved by taking upstream, which would drop the
+pointer. `ecc-sync` re-inserts it after every merge (`ensure_fork_pointer`), idempotently, and
+appends it at the end if upstream ever rewords the Project Overview paragraph it anchors to.
+**If you resolve a `CLAUDE.md` conflict by hand, re-add the pointer yourself** — or just run
+`node scripts/ci/catalog.js --write --text` and check `grep FORK-MAINTENANCE CLAUDE.md`.
+This is the only upstream-tracked file the fork modifies; everything else fork-specific is a
+new file precisely to avoid this class of problem.
 
 **The test suite rewrites `yarn.lock`** as a side effect (reformats it, ~3.6k lines). Always
 `git checkout -- yarn.lock` before committing, or it silently rides along in a `git add -A`.
