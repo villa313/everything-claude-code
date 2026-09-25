@@ -68,6 +68,7 @@ diff that has to survive merges.
 ecc-sync           fetch, merge, auto-resolve counts, test, STOP before push
 ecc-sync --status  what is staged and waiting
 ecc-sync --push    approve: push to origin, then update both envs
+ecc-sync --auto    sync, then push + update envs only if no new failures (what /ecc:auto-update runs)
 ecc-sync --abort   discard a staged sync, restore the pre-sync state
 ecc-sync --envs    update the two environments only
 ```
@@ -82,6 +83,8 @@ Safety properties worth preserving if you rewrite it:
 - Aborts and changes nothing if conflicts fall outside the known count/version allowlist
 - Never pushes on its own — the push is always a human decision
 - Re-applies the fork pointer in `CLAUDE.md` after every merge (see below)
+- Drops "new" failures that also fail on a pristine `upstream/main` worktree, so only
+  fork- or merge-caused regressions block `--auto`
 - Refuses to compare test results when `node_modules` is missing, and flags >50 failures as
   a broken environment rather than a bad merge
 
@@ -141,6 +144,14 @@ new file precisely to avoid this class of problem.
 **PATH under launchd.** The global npm `claude` at `/usr/local/bin` was removed (it had drifted
 to 2.1.68 while the native install was 2.1.260). Bare `claude` is now *not found* in a minimal
 launchd environment, so `ecc-sync` prepends `$HOME/.local/bin` to PATH. Keep that line.
+
+**`commands/auto-update.md` carries a fork-only section** (marker
+`<!-- ecc-fork:auto-update -->`) that points `/ecc:auto-update` at `ecc-sync --auto`. Its text
+lives in `~/.local/state/ecc-sync/auto-update-fork-section.md`; the file is in the auto-resolve
+allowlist and `ensure_auto_update_section` re-appends the block after every merge.
+
+**Perl substitutions on Turkish text need `-Mutf8`.** Without it the `özel` literal never
+matches under `-CSD`, the counts silently stay stale, and the Turkish catalog test fails.
 
 ### Known-failing tests — pre-existing upstream, not caused by any merge
 

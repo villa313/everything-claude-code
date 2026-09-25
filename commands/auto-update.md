@@ -26,3 +26,12 @@ node "$ECC_ROOT/scripts/auto-update.js" --repo-root /path/to/everything-claude-c
 - This command uses the recorded install-state request and reruns `install-apply.js` after pulling the latest repo changes.
 - Reinstall is intentional: it handles upstream renames and deletions that `repair.js` cannot safely reconstruct from stale operations alone.
 - Use `--dry-run` first if you want to see the reconstructed reinstall plan before mutating anything.
+
+<!-- ecc-fork:auto-update -->
+## Fork override (villa313 fork with C# track)
+
+When `~/.local/bin/ecc-sync` exists, run this instead of the Usage above: `auto-update.js` only refreshes the legacy `~/.claude` file-copy install, while `claude-per` (`~/.claude-per`) and `claude-acc` (`~/.claude-accrueme`) load the `ecc@everything-claude-code` plugin from the fork. Details in the fork's `FORK-MAINTENANCE.md`.
+
+1. Run `ecc-sync --auto` in the background (~7 min). It merges `upstream/main` keeping the C# track, runs tests, ignores failures that also occur on pristine upstream, then pushes `origin/main` and updates the marketplace + plugin in both environments.
+2. If it stops on new failures, show `ecc-sync --status` and ask before `ecc-sync --push`. If it stops on a real conflict, follow section 5 of `FORK-MAINTENANCE.md`.
+3. Verify: `for d in ~/.claude-per ~/.claude-accrueme; do CLAUDE_CONFIG_DIR=$d claude plugin list | grep -A1 'ecc@'; done`, then tell the user to restart running sessions.
