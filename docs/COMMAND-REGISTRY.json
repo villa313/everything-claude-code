@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalCommands": 100,
+  "totalCommands": 98,
   "commands": [
     {
       "command": "aside",
@@ -107,53 +107,6 @@
         "tdd-workflow"
       ],
       "path": "commands/cpp-test.md"
-    },
-    {
-      "command": "csharp-build",
-      "description": "Fix C# / .NET build errors, CS compiler errors, and NuGet dependency issues incrementally. Invokes the csharp-build-resolver agent for minimal, surgical fixes.",
-      "type": "testing",
-      "primaryAgents": [
-        "csharp-build-resolver"
-      ],
-      "allAgents": [
-        "csharp-build-resolver"
-      ],
-      "skills": [
-        "dotnet-patterns"
-      ],
-      "path": "commands/csharp-build.md"
-    },
-    {
-      "command": "csharp-review",
-      "description": "Comprehensive C# / ASP.NET Core code review for async correctness, EF Core patterns, nullable reference types, security, and idiomatic .NET. Invokes the csharp-reviewer agent.",
-      "type": "testing",
-      "primaryAgents": [
-        "csharp-reviewer"
-      ],
-      "allAgents": [
-        "csharp-reviewer"
-      ],
-      "skills": [
-        "csharp-testing",
-        "dotnet-patterns"
-      ],
-      "path": "commands/csharp-review.md"
-    },
-    {
-      "command": "csharp-test",
-      "description": "Enforce TDD workflow for C#. Write xUnit tests first, then implement. Verify 80%+ coverage with coverlet / dotnet test --collect.",
-      "type": "testing",
-      "primaryAgents": [
-        "csharp-reviewer"
-      ],
-      "allAgents": [
-        "csharp-reviewer"
-      ],
-      "skills": [
-        "csharp-testing",
-        "dotnet-patterns"
-      ],
-      "path": "commands/csharp-test.md"
     },
     {
       "command": "ecc-guide",
@@ -454,6 +407,18 @@
         "continuous-learning-v2"
       ],
       "path": "commands/instinct-status.md"
+    },
+    {
+      "command": "issue-review",
+      "description": "Review a GitHub issue the way /code-review reviews a PR — verify the report against the codebase, find duplicates and prior fixes, score completeness, assign severity, and draft a reply. Posting is opt-in. Pass an issue number, URL, or owner/repo#N.",
+      "type": "review",
+      "primaryAgents": [],
+      "allAgents": [],
+      "skills": [
+        "github-ops",
+        "issue-review"
+      ],
+      "path": "commands/issue-review.md"
     },
     {
       "command": "jira",
@@ -1111,14 +1076,10 @@
       "orchestration": 12,
       "planning": 2,
       "refactoring": 1,
-      "review": 15,
-      "testing": 56
+      "review": 16,
+      "testing": 53
     },
     "topAgents": [
-      {
-        "agent": "csharp-reviewer",
-        "count": 2
-      },
       {
         "agent": "dart-build-resolver",
         "count": 2
@@ -1140,10 +1101,6 @@
         "count": 1
       },
       {
-        "agent": "csharp-build-resolver",
-        "count": 1
-      },
-      {
         "agent": "go-build-resolver",
         "count": 1
       },
@@ -1153,6 +1110,14 @@
       },
       {
         "agent": "kotlin-build-resolver",
+        "count": 1
+      },
+      {
+        "agent": "kotlin-reviewer",
+        "count": 1
+      },
+      {
+        "agent": "planner",
         "count": 1
       }
     ],
@@ -1178,10 +1143,6 @@
         "count": 3
       },
       {
-        "skill": "dotnet-patterns",
-        "count": 3
-      },
-      {
         "skill": "flutter-dart-code-review",
         "count": 3
       },
@@ -1195,6 +1156,10 @@
       },
       {
         "skill": "cpp-coding-standards",
+        "count": 2
+      },
+      {
+        "skill": "cpp-testing",
         "count": 2
       }
     ]
